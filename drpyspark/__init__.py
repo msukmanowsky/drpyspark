@@ -15,7 +15,7 @@ from .version import VERSION
 log = logging.getLogger(__package__)
 
 
-def print_output(f):
+def print_output(f, num_elements, out_file, truncate_dataframes):
     @functools.wraps(f)
     def _debug_pyspark_call(*args, **kwargs):
         log.debug('%s called', f.__name__)
@@ -33,16 +33,20 @@ def print_output(f):
                       f.__name__)
             return result
 
-        sample = result.take(5)
+        if isinstance(result, pyspark.RDD):
+            sample = pprint.pformat(result.take(num_elements))
+        elif isinstance(result, pyspark.sql.DataFrame):
+            sample = result._jdf.showString(num_elements, truncate_dataframes)
         file, line_no, code = stack[-1][1], stack[-1][2], ''.join(stack[-1][4]).strip()
-        print('{}:{}: {}'.format(file, line_no, code))
-        pprint.pprint(sample)
+        print('{}:{}: {}'.format(file, line_no, code), file=out_file)
+        print(sample, file=out_file)
+
         return result
 
     return _debug_pyspark_call
 
 
-def enable_debug_output(num_elements=5):
+def enable_debug_output(num_elements=5, file=sys.stdout, truncate_dataframes=True):
     if pyspark is None:
         print('pyspark not found in PYTHONPATH, did you run via spark-submit?',
               file=sys.stderr)
@@ -57,5 +61,5 @@ def enable_debug_output(num_elements=5):
         methods = [(name, member) for (name, member) in members
                    if not name.startswith('_') and inspect.ismethod(member)]
         for name, method in methods:
-            setattr(klass, name, print_output(method))
+            setattr(klass, name, print_output(method, num_elements, file, truncate_dataframes))
             log.debug('Patched %s.%s.', klass.__name__, name)
