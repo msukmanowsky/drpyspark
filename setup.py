@@ -26,7 +26,7 @@ setup(
     description=('drpyspark provides handy utilities for debugging and tuning '
                  'Apache Spark programs (specifically, pyspark).'),
     long_description=readme(),
-    license='Apache License 2.0',
+    license='MIT License',
     packages=find_packages(),
     install_requires=install_requires,
     tests_require=tests_require,
