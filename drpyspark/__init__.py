@@ -33,7 +33,6 @@ def print_output(f):
                       f.__name__)
             return result
 
-        log.debug('printing 5 from %s', f.__name__)
         sample = result.take(5)
         file, line_no, code = stack[-1][1], stack[-1][2], ''.join(stack[-1][4]).strip()
         print('{}:{}: {}'.format(file, line_no, code))
